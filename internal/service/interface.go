@@ -1,4 +1,4 @@
-//go:generate mockgen -destination=service_mock.go -package=service github.com/ishankochar09/go_pro/gofrTutorial/service VehicleInterface
+//go:generate mockgen -destination=service_mock.go -package=service github.com/ishankochar09/go_pro/gofrTutorial/internal/service Vehicle
 package service
 
 import (
@@ -6,7 +6,7 @@ import (
 	"github.com/ishankochar09/go_pro/gofrTutorial/internal/models"
 )
 
-type VehicleInterface interface {
+type Vehicle interface {
 	GetIDVehicle(*gofr.Context, int) (models.Vehicle, error)
 	Create(*gofr.Context, *models.Vehicle) (models.Vehicle, error)
 	AllVehicles(*gofr.Context) ([]models.Vehicle, error)

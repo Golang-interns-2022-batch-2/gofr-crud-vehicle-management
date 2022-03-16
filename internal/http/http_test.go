@@ -20,7 +20,7 @@ import (
 func TestGetVehicle(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	MockVehicleInterface := service.NewMockVehicleInterface(mockCtrl)
+	MockVehicleInterface := service.NewMockVehicle(mockCtrl)
 	handler := New(MockVehicleInterface)
 
 	testCases := []struct {
@@ -66,7 +66,7 @@ func TestGetVehicle(t *testing.T) {
 func TestCreateVehicle(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	MockVehicleInterface := service.NewMockVehicleInterface(mockCtrl)
+	MockVehicleInterface := service.NewMockVehicle(mockCtrl)
 	handler := New(MockVehicleInterface)
 
 	testcases := []struct {
@@ -147,7 +147,7 @@ func TestCreateVehicle(t *testing.T) {
 func TestGetAllVehicles(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	MockVehicleInterface := service.NewMockVehicleInterface(mockCtrl)
+	MockVehicleInterface := service.NewMockVehicle(mockCtrl)
 	handler := New(MockVehicleInterface)
 
 	testcases := []struct {
@@ -185,7 +185,7 @@ func TestGetAllVehicles(t *testing.T) {
 func TestDeleteVeh(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	MockVehicleInterface := service.NewMockVehicleInterface(mockCtrl)
+	MockVehicleInterface := service.NewMockVehicle(mockCtrl)
 	handler := New(MockVehicleInterface)
 
 	testCases := []struct {
@@ -228,7 +228,7 @@ func TestDeleteVeh(t *testing.T) {
 func TestVehicleUpdate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	MockVehicleInterface := service.NewMockVehicleInterface(mockCtrl)
+	MockVehicleInterface := service.NewMockVehicle(mockCtrl)
 	handler := New(MockVehicleInterface)
 	testCases := []struct {
 		ID          string

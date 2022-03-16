@@ -5,46 +5,27 @@ import (
 	"fmt"
 	"strconv"
 
-	gerror "developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
+	"developer.zopsmart.com/go/gofr/pkg/gofr/types"
 	"github.com/ishankochar09/go_pro/gofrTutorial/internal/models"
 	"github.com/ishankochar09/go_pro/gofrTutorial/internal/service"
+
+	gerror "developer.zopsmart.com/go/gofr/pkg/errors"
 )
 
 type Handler struct {
-	reqService service.VehicleInterface
+	serviceHandler service.Vehicle
 }
 
-func New(user service.VehicleInterface) Handler {
-	return Handler{reqService: user}
-}
-
-type vehicleDetails struct {
-	Data models.Vehicle `json:"Vehicle"`
-}
-
-type vehiclesList struct {
-	Data []models.Vehicle `json:"Vehicle"`
+func New(vehicle service.Vehicle) Handler {
+	return Handler{serviceHandler: vehicle}
 }
 
 type vehicleResponse struct {
-	Code   int            `json:"Code"`
-	Status string         `json:"Status"`
-	Data   vehicleDetails `json:"Data"`
+	Data interface{} `json:"vehicle"`
 }
 
-type allVehicleResponse struct {
-	Code   int          `json:"Code"`
-	Status string       `json:"Status"`
-	Data   vehiclesList `json:"Data"`
-}
-type messageError struct {
-	Code    int    `json:"code"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
-}
-
-func (hn Handler) GetByIDVehicle(ctx *gofr.Context) (interface{}, error) {
+func (h Handler) GetByIDVehicle(ctx *gofr.Context) (interface{}, error) {
 	vehID := ctx.PathParam("id")
 
 	vehicleID, err := strconv.Atoi(vehID)
@@ -53,32 +34,22 @@ func (hn Handler) GetByIDVehicle(ctx *gofr.Context) (interface{}, error) {
 		return nil, gerror.MissingParam{Param: []string{"id"}}
 	}
 
-	vehicle, err := hn.reqService.GetIDVehicle(ctx, vehicleID)
+	res, err := h.serviceHandler.GetIDVehicle(ctx, vehicleID)
 
 	if err != nil {
-		resp := messageError{
-			Code:    400,
-			Status:  "ERROR",
-			Message: err.Error(),
-		}
-
-		return resp, err
-	}
-
-	data := vehicleDetails{
-		Data: vehicle,
+		return nil, err
 	}
 
 	resp := vehicleResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   data,
+		Data: res,
 	}
 
-	return resp, nil
+	return types.Response{
+		Data: resp,
+	}, nil
 }
 
-func (hn Handler) CreateVehicle(ctx *gofr.Context) (interface{}, error) {
+func (h Handler) CreateVehicle(ctx *gofr.Context) (interface{}, error) {
 	var vehicle models.Vehicle
 	err := ctx.Bind(&vehicle)
 
@@ -86,61 +57,39 @@ func (hn Handler) CreateVehicle(ctx *gofr.Context) (interface{}, error) {
 		return nil, gerror.InvalidParam{Param: []string{"body"}}
 	}
 
-	var ans models.Vehicle
-
-	ans, err = hn.reqService.Create(ctx, &vehicle)
+	res, err := h.serviceHandler.Create(ctx, &vehicle)
 
 	if err != nil {
-		resp := messageError{
-			Code:    400,
-			Status:  "ERROR",
-			Message: err.Error(),
-		}
-
-		return resp, err
-	}
-
-	data := vehicleDetails{
-		Data: ans,
+		return nil, err
 	}
 
 	resp := vehicleResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   data,
-	}
-
-	return resp, nil
-}
-
-func (hn Handler) GetAllVehicles(ctx *gofr.Context) (interface{}, error) {
-	res, err := hn.reqService.AllVehicles(ctx)
-	fmt.Println(err)
-
-	if err == sql.ErrNoRows {
-		resp := messageError{
-			Code:    400,
-			Status:  "ERROR",
-			Message: err.Error(),
-		}
-
-		return resp, err
-	}
-
-	data := vehiclesList{
 		Data: res,
 	}
 
-	resp := allVehicleResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   data,
-	}
-
-	return resp, nil
+	return types.Response{
+		Data: resp,
+	}, nil
 }
 
-func (hn Handler) DeleteVehicle(ctx *gofr.Context) (interface{}, error) {
+func (h Handler) GetAllVehicles(ctx *gofr.Context) (interface{}, error) {
+	res, err := h.serviceHandler.AllVehicles(ctx)
+	fmt.Println(err)
+
+	if err == sql.ErrNoRows {
+		return nil, err
+	}
+
+	resp := vehicleResponse{
+		Data: res,
+	}
+
+	return types.Response{
+		Data: resp,
+	}, nil
+}
+
+func (h Handler) DeleteVehicle(ctx *gofr.Context) (interface{}, error) {
 	vehID := ctx.PathParam("id")
 	vehicleID, err := strconv.Atoi(vehID)
 
@@ -148,23 +97,17 @@ func (hn Handler) DeleteVehicle(ctx *gofr.Context) (interface{}, error) {
 		return nil, gerror.MissingParam{Param: []string{"id"}}
 	}
 
-	err = hn.reqService.DeleteIDVehicle(ctx, vehicleID)
+	err = h.serviceHandler.DeleteIDVehicle(ctx, vehicleID)
 	fmt.Print("Err : ", err)
 
 	if err == sql.ErrNoRows {
-		resp := messageError{
-			Code:    400,
-			Status:  "ERROR",
-			Message: err.Error(),
-		}
-
-		return resp, err
+		return nil, err
 	}
 
 	return "Deleted successfully", nil
 }
 
-func (hn Handler) UpdateVehicle(ctx *gofr.Context) (interface{}, error) {
+func (h Handler) UpdateVehicle(ctx *gofr.Context) (interface{}, error) {
 	vehID := ctx.PathParam("id")
 	vehicleID, err := strconv.Atoi(vehID)
 
@@ -179,27 +122,17 @@ func (hn Handler) UpdateVehicle(ctx *gofr.Context) (interface{}, error) {
 		return nil, gerror.InvalidParam{Param: []string{"body"}}
 	}
 
-	res, err := hn.reqService.UpdateIDVehicle(ctx, vehicleID, &updatedVehicle)
+	res, err := h.serviceHandler.UpdateIDVehicle(ctx, vehicleID, &updatedVehicle)
 
 	if err != nil {
-		resp := messageError{
-			Code:    400,
-			Status:  "ERROR",
-			Message: err.Error(),
-		}
-
-		return resp, err
-	}
-
-	data := vehicleDetails{
-		Data: res,
+		return nil, err
 	}
 
 	resp := vehicleResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   data,
+		Data: res,
 	}
 
-	return resp, nil
+	return types.Response{
+		Data: resp,
+	}, nil
 }
