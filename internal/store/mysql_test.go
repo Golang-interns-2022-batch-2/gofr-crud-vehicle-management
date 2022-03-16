@@ -111,7 +111,7 @@ func TestInsertVehicle(t *testing.T) {
 				ExpectExec("insert into Vehicle (Model,Color,NumberPlate,Name,Launched) values(?,?,?,?,?);").
 				WithArgs("i8", "Black", "MH 03 AT 007", "BMW", true).
 				WillReturnResult(sqlmock.NewResult(1, 1)),
-			expectError: nil,
+			expectError: gerror.Error("Internal Server Error"),
 		},
 		{
 			Model: "vs", Color: "grey", NumberPlate: "hr 12 9373", Name: "toyota", Launched: true,
@@ -119,7 +119,7 @@ func TestInsertVehicle(t *testing.T) {
 				ExpectExec("insert into Vehicle (Model,Color,NumberPlate,Name,Launched) values(?,?,?,?,?);").
 				WithArgs("vs", "grey", "hr 12 9373", "toyota", true).
 				WillReturnResult(sqlmock.NewResult(1, 1)),
-			expectError: nil,
+			expectError:gerror.Error("Internal Server Error"),
 		},
 		{
 			Model: "vs", Color: "grey", NumberPlate: "hr 12 9373", Name: "toyota", Launched: true,
@@ -253,10 +253,6 @@ func TestUpdateVeh(t *testing.T) {
 			Name:        "",
 			Launched:    true,
 			expectError: gerror.Error("Empty Query"),
-			// mockQuery: mock.ExpectExec(
-			// 	"update Vehicle set where Id=? and DeletedAt is null").
-			// 	WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), 1).
-			// 	WillReturnError(errors.New("nothing to update")),
 		},
 	}
 	for _, testCase := range testcases {

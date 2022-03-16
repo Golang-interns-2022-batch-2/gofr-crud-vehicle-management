@@ -43,8 +43,10 @@ func (s *dbStore) InsertVehicle(ctx *gofr.Context, veh *models.Vehicle) (models.
 	}
 
 	id, _ := res.LastInsertId()
-	resp, _ := s.GetVehicleByID(ctx, int(id))
-
+	resp, err := s.GetVehicleByID(ctx, int(id))
+	if err != nil {
+		return models.Vehicle{}, gerror.Error("Internal Server Error")
+	}
 	return resp, nil
 }
 func (s *dbStore) GetAll(ctx *gofr.Context) ([]models.Vehicle, error) {
@@ -75,7 +77,9 @@ func (s *dbStore) GetAll(ctx *gofr.Context) ([]models.Vehicle, error) {
 
 		return vehicles, nil
 	}
-
+	if err != nil {
+		return nil, gerror.Error("Internal Server Error")
+	}
 	return []models.Vehicle{}, errors.New("error exec select query")
 }
 func (s *dbStore) DeleteVehicle(ctx *gofr.Context, id int) error {

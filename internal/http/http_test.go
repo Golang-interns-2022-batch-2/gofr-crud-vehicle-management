@@ -71,29 +71,12 @@ func TestCreateVehicle(t *testing.T) {
 
 	testcases := []struct {
 		reqBody     []byte
-		resBody     []byte
 		mock        *gomock.Call
 		scode       int
 		ExpectedErr error
 	}{
 		{
 			reqBody: []byte(`{"Id":5,"Model":"i8","Color":"black", "NumberPlate":"MH 03 AT 007","Name":"BMW", "Launched": true}`),
-			resBody: []byte(
-				`{"Code":200,
-				"Status":"SUCCESS",
-				"Data":
-				{"Vehicle":
-				{"id":5,
-				"model":"i8",
-				"color":"black",
-				"numberPlate":"MH 03 AT 007",
-				"updatedAt":"0001-01-01T00:00:00Z",
-				"createdAt":"0001-01-01T00:00:00Z",
-				"name":"BMW",
-				"launched":true
-				}
-				}
-				}`),
 			mock: MockVehicleInterface.
 				EXPECT().
 				Create(gomock.Any(), gomock.Any()).
@@ -104,22 +87,6 @@ func TestCreateVehicle(t *testing.T) {
 		},
 		{
 			reqBody: []byte(`{"Id":5,"Model":"i8","Color":"black", "NumberPlate":"MH 03 AT 007","Name":"BMW", "Launched": true}`),
-			resBody: []byte(
-				`{"Code":200,
-				 "Status":"SUCCESS",
-				 "Data":{
-					 "Vehicle":
-					 {"id":5,
-					 "model":"i8",
-					 "color":"black",
-					 "numberPlate":"MH 03 AT 007",
-					 "updatedAt":"0001-01-01T00:00:00Z",
-					 "createdAt":"0001-01-01T00:00:00Z",
-					 "name":"BMW",
-					 "launched":true
-					 }
-					 }
-					 }`),
 			mock: MockVehicleInterface.
 				EXPECT().
 				Create(gomock.Any(), gomock.Any()).
@@ -235,7 +202,6 @@ func TestVehicleUpdate(t *testing.T) {
 		scode       int
 		mock        *gomock.Call
 		expectedErr error
-		veh         models.Vehicle
 		reqBody     []byte
 	}{
 		{
@@ -243,7 +209,6 @@ func TestVehicleUpdate(t *testing.T) {
 			scode:       200,
 			mock:        MockVehicleInterface.EXPECT().UpdateIDVehicle(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.Vehicle{}, nil),
 			expectedErr: nil,
-			veh:         models.Vehicle{ID: 5, Model: "i8", Color: "black", NumberPlate: "MH 03 AT 007", Name: "BMW", Launched: true},
 			reqBody:     []byte(`{"Id":5,"Model":"i8","Color":"black", "NumberPlate":"MH 03 AT 007","Name":"BMW", "Launched": true}`),
 		},
 		{
@@ -253,14 +218,12 @@ func TestVehicleUpdate(t *testing.T) {
 				UpdateIDVehicle(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(models.Vehicle{}, errors.New("invalid id")),
 			expectedErr: errors.New("invalid id"),
-			veh:         models.Vehicle{ID: 5, Model: "i8", Color: "black", NumberPlate: "MH 03 AT 007", Name: "BMW", Launched: true},
 			reqBody:     []byte(`{"Id":5,"Model":"i8","Color":"black", "NumberPlate":"MH 03 AT 007","Name":"BMW", "Launched": true}`),
 		},
 		{
 			ID:          "abc",
 			scode:       400,
 			expectedErr: gerror.MissingParam{Param: []string{"id"}},
-			veh:         models.Vehicle{ID: 5, Model: "i8", Color: "black", NumberPlate: "MH 03 AT 007", Name: "BMW", Launched: true},
 			reqBody:     []byte(`{"Id":5,"Model":"i8","Color":"black", "NumberPlate":"MH 03 AT 007","Name":"BMW", "Launched": true}`),
 		},
 		{
@@ -270,7 +233,6 @@ func TestVehicleUpdate(t *testing.T) {
 				UpdateIDVehicle(gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(models.Vehicle{}, gerror.InvalidParam{Param: []string{"body"}}),
 			expectedErr: gerror.InvalidParam{Param: []string{"body"}},
-			veh:         models.Vehicle{ID: 5, Model: "i8", Color: "black", NumberPlate: "MH 03 AT 007", Name: "BMW", Launched: true},
 			reqBody:     []byte(`{"Id":5,"Model":"","Color":"", "NumberPlate":"","Name":"BMW", "Launched": true}`),
 		},
 	}

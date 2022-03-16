@@ -1,8 +1,6 @@
 package service
 
 import (
-	"fmt"
-
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 	"github.com/ishankochar09/go_pro/gofrTutorial/internal/models"
 	"github.com/ishankochar09/go_pro/gofrTutorial/internal/store"
@@ -37,22 +35,18 @@ func (es *VehicleService) Create(ctx *gofr.Context, veh *models.Vehicle) (models
 	var err error
 
 	if veh.ID < 0 {
-		fmt.Println("Invalid Id")
 		return vehi, gerror.Error("invalid Id")
 	}
 
 	if veh.NumberPlate == "" {
-		fmt.Println("Invalid numberPlate")
 		return vehi, gerror.Error("invalid numberPlate")
 	}
 
 	if veh.Model == "" {
-		fmt.Println("Invalid Model")
 		return vehi, gerror.Error("Invalid Model")
 	}
 
 	if veh.Name == "" {
-		fmt.Println("Invalid name")
 		return vehi, gerror.Error("Invalid name")
 	}
 
