@@ -15,26 +15,26 @@ func New(v store.VehicleManager) *StoreHandler {
 	return &StoreHandler{datastore: v}
 }
 func (v StoreHandler) Get(c *gofr.Context, id int) (*model.Vehicle, error) {
-	if IsIDValid(id) {
-		veh, err := v.datastore.GetDetailsByID(c, id)
+	if id > 0 {
+		vehicleData, err := v.datastore.GetDetailsByID(c, id)
 
 		if err != nil {
 			return &model.Vehicle{}, err
 		}
 
-		return veh, nil
+		return vehicleData, nil
 	}
 
-	return &model.Vehicle{}, errors.Error("validation error")
+	return nil, errors.InvalidParam{Param: []string{"id"}}
 }
 
 func (v StoreHandler) Post(c *gofr.Context, vehicle *model.Vehicle) (*model.Vehicle, error) {
-	veh, err := v.datastore.InsertVehicle(c, vehicle)
+	vehicleData, err := v.datastore.InsertVehicle(c, vehicle)
 	if err != nil {
 		return &model.Vehicle{}, err
 	}
 
-	vehicleData, err := v.datastore.GetDetailsByID(c, int(veh.ID))
+	vehicleData, err = v.datastore.GetDetailsByID(c, int(vehicle.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (v StoreHandler) Post(c *gofr.Context, vehicle *model.Vehicle) (*model.Vehi
 	return vehicleData, nil
 }
 func (v StoreHandler) Delete(c *gofr.Context, id int) error {
-	if IsIDValid(id) {
+	if id > 0 {
 		err := v.datastore.DeleteVehicleByID(c, id)
 		if err != nil {
 			return err
@@ -51,11 +51,11 @@ func (v StoreHandler) Delete(c *gofr.Context, id int) error {
 		return nil
 	}
 
-	return errors.Error("validation error")
+	return errors.InvalidParam{Param: []string{"id"}}
 }
 
 func (v StoreHandler) Update(c *gofr.Context, id int, vehicle *model.Vehicle) (*model.Vehicle, error) {
-	if IsIDValid(id) {
+	if id > 0 {
 		vehicle.ID = int64(id)
 		err := v.datastore.UpdateVehicleByID(c, vehicle)
 
@@ -66,15 +66,15 @@ func (v StoreHandler) Update(c *gofr.Context, id int, vehicle *model.Vehicle) (*
 		return v.Get(c, id)
 	}
 
-	return nil, errors.Error("validation error")
+	return nil, errors.InvalidParam{Param: []string{"id"}}
 }
 
 func (v StoreHandler) GetAll(c *gofr.Context) ([]*model.Vehicle, error) {
-	veh, err := v.datastore.GetAll(c)
+	vehicleData, err := v.datastore.GetAll(c)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return veh, nil
+	return vehicleData, nil
 }

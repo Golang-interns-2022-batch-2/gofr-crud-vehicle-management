@@ -31,7 +31,7 @@ func TestGet(t *testing.T) {
 
 		{
 			ID:          -1,
-			expectError: errors.Error("validation error"),
+			expectError: errors.InvalidParam{Param: []string{"invalid parameters"}},
 		},
 		{
 			ID:          2,
@@ -192,7 +192,7 @@ func TestDelete(t *testing.T) {
 
 		{
 			ID:          -1,
-			expectError: errors.Error("validation error"),
+			expectError: errors.InvalidParam{Param: []string{"invalid parameters"}},
 		},
 		{
 			ID:          2,
@@ -238,7 +238,7 @@ func TestUpdate(t *testing.T) {
 				Name:        "",
 				Launched:    null.BoolFrom(true),
 			},
-			expectError: errors.Error("validation error"),
+			expectError: errors.InvalidParam{Param: []string{"invalid parameters"}},
 		},
 
 		{

@@ -1,14 +1,15 @@
 package vehicle
 
 import (
-	"fmt"
+	"database/sql"
+	"net/http"
+
 	"strconv"
 	"time"
 
 	"developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
 	"github.com/SN786/gofr_vms/internal/model"
-	"gopkg.in/guregu/null.v4"
 )
 
 type Storer struct {
@@ -25,8 +26,23 @@ func (s Storer) GetDetailsByID(ctx *gofr.Context, id int) (*model.Vehicle, error
 		Scan(&vehResponse.ID, &vehResponse.Model, &vehResponse.Color, &vehResponse.NumberPlate,
 			&vehResponse.UpdatedAt, &vehResponse.CreatedAt, &vehResponse.Name, &vehResponse.Launched)
 
+	if err == sql.ErrNoRows {
+
+		idStr := strconv.Itoa(id)
+
+		return nil, errors.EntityNotFound{
+			Entity: "Vehicle",
+			ID:     idStr,
+		}
+	}
+
 	if err != nil {
-		return nil, errors.Error(fmt.Sprintf("couldn't get the vechicle: %v", id))
+
+		return nil, &errors.Response{
+			StatusCode: http.StatusInternalServerError,
+			Code:       http.StatusText(http.StatusInternalServerError),
+			Reason:     "couldn't fetch the vehicle details",
+		}
 	}
 
 	return &vehResponse, nil
@@ -36,7 +52,11 @@ func (s Storer) InsertVehicle(ctx *gofr.Context, vehicle *model.Vehicle) (*model
 		vehicle.Model, vehicle.Color, vehicle.NumberPlate, vehicle.Name, vehicle.Launched)
 
 	if err != nil {
-		return nil, errors.Error("couldn't insert the vechicle")
+		return nil, &errors.Response{
+			StatusCode: http.StatusInternalServerError,
+			Code:       http.StatusText(http.StatusInternalServerError),
+			Reason:     "couldn't delete the vehicle",
+		}
 	}
 
 	id, _ := res.LastInsertId()
@@ -50,8 +70,22 @@ func (s Storer) DeleteVehicleByID(ctx *gofr.Context, id int) error {
 
 	res, err := ctx.DB().ExecContext(ctx, "update vehicles set deletedAt=? where id=? and deletedAt is null", curentDateTime, id)
 
+	if err == sql.ErrNoRows {
+
+		idStr := strconv.Itoa(id)
+
+		return errors.EntityNotFound{
+			Entity: "Vehicle",
+			ID:     idStr,
+		}
+	}
 	if err != nil {
-		return errors.Error(fmt.Sprintf("couldn't delete the vechicle: %v", id))
+
+		return &errors.Response{
+			StatusCode: http.StatusInternalServerError,
+			Code:       http.StatusText(http.StatusInternalServerError),
+			Reason:     "couldn't delete the vehicle",
+		}
 	}
 
 	rowAffected, _ := res.RowsAffected()
@@ -76,9 +110,23 @@ func (s Storer) UpdateVehicleByID(ctx *gofr.Context, vehicle *model.Vehicle) err
 	values = append(values, curentDateTime, vehicle.ID)
 	_, err := ctx.DB().ExecContext(ctx, query, values...)
 
+	if err == sql.ErrNoRows {
+
+		idStr := strconv.Itoa(int(vehicle.ID))
+
+		return errors.EntityNotFound{
+			Entity: "Vehicle",
+			ID:     idStr,
+		}
+	}
+
 	if err != nil {
-		fmt.Println(err.Error())
-		return errors.Error(fmt.Sprintf("couldn't update the vechicle: %v", vehicle.ID))
+
+		return &errors.Response{
+			StatusCode: http.StatusInternalServerError,
+			Code:       http.StatusText(http.StatusInternalServerError),
+			Reason:     "couldn't update the vehicle",
+		}
 	}
 
 	return nil
@@ -88,41 +136,39 @@ func (s Storer) GetAll(ctx *gofr.Context) ([]*model.Vehicle, error) {
 	res, err := ctx.DB().
 		QueryContext(ctx, "select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where deletedAt is NULL")
 
+	if err == sql.ErrNoRows {
+
+		return nil, errors.EntityNotFound{
+			Entity: "Vehicle",
+			ID:     "all",
+		}
+	}
 	if err != nil {
-		return nil, errors.Error("couldn't get list of vechicles:")
+
+		return nil, &errors.Response{
+			StatusCode: http.StatusInternalServerError,
+			Code:       http.StatusText(http.StatusInternalServerError),
+			Reason:     "couldn't delete the vehicle",
+		}
 	}
 
-	var (
-		vehicles    []*model.Vehicle
-		ID          int64
-		Model       string
-		Color       string
-		NumberPlate string
-		UpdatedAt   string
-		CreatedAt   string
-		Name        string
-		Launched    null.Bool
-	)
+	var vehicles []*model.Vehicle
 
 	for res.Next() {
-		err := res.Scan(&ID, &Model, &Color, &NumberPlate, &UpdatedAt, &CreatedAt, &Name, &Launched)
+		var vehicle model.Vehicle
+
+		err := res.Scan(&vehicle.ID, &vehicle.Model, &vehicle.Color, &vehicle.NumberPlate, &vehicle.UpdatedAt, &vehicle.CreatedAt, &vehicle.Name, &vehicle.Launched)
 
 		if err != nil {
-			return nil, errors.Error("scanning error")
+
+			return nil, &errors.Response{
+				StatusCode: http.StatusInternalServerError,
+				Code:       http.StatusText(http.StatusInternalServerError),
+				Reason:     "couldn't ger the vehicles",
+			}
 		}
 
-		vehicle := &model.Vehicle{
-			ID:          ID,
-			Model:       Model,
-			Color:       Color,
-			NumberPlate: NumberPlate,
-			UpdatedAt:   UpdatedAt,
-			CreatedAt:   CreatedAt,
-			Name:        Name,
-			Launched:    Launched,
-		}
-
-		vehicles = append(vehicles, vehicle)
+		vehicles = append(vehicles, &vehicle)
 	}
 
 	return vehicles, nil

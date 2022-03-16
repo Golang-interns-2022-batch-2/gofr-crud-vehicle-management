@@ -5,6 +5,7 @@ import (
 
 	"developer.zopsmart.com/go/gofr/pkg/errors"
 	"developer.zopsmart.com/go/gofr/pkg/gofr"
+	"developer.zopsmart.com/go/gofr/pkg/gofr/types"
 	"github.com/SN786/gofr_vms/internal/model"
 	"github.com/SN786/gofr_vms/internal/service"
 )
@@ -18,50 +19,44 @@ func New(s service.VehicleManager) *Handler {
 }
 
 func (s Handler) Get(c *gofr.Context) (interface{}, error) {
-	i := c.PathParam("id")
-	id, _ := strconv.Atoi(i)
+	idStr := c.PathParam("id")
+	id, _ := strconv.Atoi(idStr)
 	vehResponse, err := s.ServiceHandler.Get(c, id)
 
 	if err != nil {
 		return nil, err
 	}
 
-	df := model.DataFields{
-		Vehicle: vehResponse,
-	}
-	resp := model.VehicleModelResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   df,
+	res := types.Response{
+		Data: model.DataFields{
+			Vehicle: vehResponse,
+		},
 	}
 
-	return resp, nil
+	return res, nil
 }
 
 func (s Handler) Post(ctx *gofr.Context) (interface{}, error) {
-	var veh model.Vehicle
+	var vehicle model.Vehicle
 
-	if err := ctx.Bind(&veh); err != nil {
+	if err := ctx.Bind(&vehicle); err != nil {
 		ctx.Logger.Errorf("error in binding: %v", err)
-		return nil, errors.InvalidParam{Param: []string{"body"}}
+		return nil, errors.InvalidParam{}
 	}
 
-	resp, err := s.ServiceHandler.Post(ctx, &veh)
+	vehicleData, err := s.ServiceHandler.Post(ctx, &vehicle)
 
 	if err != nil {
 		return nil, err
 	}
 
-	df := model.DataFields{
-		Vehicle: resp,
-	}
-	vehResponse := model.VehicleModelResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   df,
+	res := types.Response{
+		Data: model.DataFields{
+			Vehicle: vehicleData,
+		},
 	}
 
-	return vehResponse, nil
+	return res, nil
 }
 
 func (s Handler) Delete(c *gofr.Context) (interface{}, error) {
@@ -83,49 +78,42 @@ func (s Handler) Delete(c *gofr.Context) (interface{}, error) {
 }
 
 func (s Handler) Update(ctx *gofr.Context) (interface{}, error) {
-	var veh model.Vehicle
+	var vehicle model.Vehicle
 
 	i := ctx.PathParam("id")
 	id, _ := strconv.Atoi(i)
 
-	if err := ctx.Bind(&veh); err != nil {
+	if err := ctx.Bind(&vehicle); err != nil {
 		ctx.Logger.Errorf("error in binding: %v", err)
 		return nil, errors.InvalidParam{Param: []string{"body"}}
 	}
 
-	vehResponse, err := s.ServiceHandler.Update(ctx, id, &veh)
+	vehicleData, err := s.ServiceHandler.Update(ctx, id, &vehicle)
 
 	if err != nil {
 		return nil, err
 	}
 
-	df := model.DataFields{
-		Vehicle: vehResponse,
-	}
-	resp := model.VehicleModelResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   df,
+	res := types.Response{
+		Data: model.DataFields{
+			Vehicle: vehicleData,
+		},
 	}
 
-	return resp, nil
+	return res, nil
 }
 
 func (s Handler) GetAll(ctx *gofr.Context) (interface{}, error) {
-	vehResponse, err := s.ServiceHandler.GetAll(ctx)
+	vehicleData, err := s.ServiceHandler.GetAll(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	dataField := model.DataField{
-		Vehicle: vehResponse,
+	res := types.Response{
+		Data: model.DataField{
+			Vehicle: vehicleData,
+		},
 	}
-	resp := model.AllVehicleModelResponse{
-		Code:   200,
-		Status: "SUCCESS",
-		Data:   dataField,
-	}
-
-	return resp, nil
+	return res, nil
 }

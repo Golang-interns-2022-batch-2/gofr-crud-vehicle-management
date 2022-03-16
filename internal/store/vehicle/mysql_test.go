@@ -2,6 +2,7 @@ package vehicle
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -69,6 +70,19 @@ func TestGetDetailsByID(t *testing.T) {
 				ExpectQuery("select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where id=? and deletedAt is NULL").
 				WithArgs(-1).WillReturnError(errors.Error(fmt.Sprintf("couldn't get the vechicle: %v", -1))),
 			expectError: errors.Error(fmt.Sprintf("couldn't get the vechicle: %v", -1)),
+		},
+
+		{
+			ID:          23,
+			Model:       "i10",
+			Color:       "White",
+			NumberPlate: "MH 03 AT 123",
+			Name:        "Suzuki",
+			Launched:    false,
+			mockQuery: mock.
+				ExpectQuery("select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where id=? and deletedAt is NULL").
+				WithArgs(23).WillReturnError(sql.ErrNoRows),
+			expectError: sql.ErrNoRows,
 		},
 	}
 
@@ -180,6 +194,12 @@ func TestDeleteVehicleByID(t *testing.T) {
 			expectError: errors.Error(fmt.Sprintf("couldn't delete the vechicle: %v", 1)),
 		},
 		{
+			ID: 1,
+			mockQuery: mock.ExpectExec("update vehicles set deletedAt=? where id=? and deletedAt is null").WithArgs(sqlmock.AnyArg(), 1).
+				WillReturnError(sql.ErrNoRows),
+			expectError: sql.ErrNoRows,
+		},
+		{
 			ID: 2,
 			mockQuery: mock.ExpectExec("update vehicles set deletedAt=? where id=? and deletedAt is null").WithArgs(sqlmock.AnyArg(), 2).
 				WillReturnResult(sqlmock.NewResult(1, 1)),
@@ -242,6 +262,16 @@ func TestUpdateVehicleById(t *testing.T) {
 			mockQuery: mock.ExpectExec("update vehicles set model=?,name=?,launched=?,updatedAt=? where id=? and deletedAt is NULL").
 				WithArgs("i8", "BMW", true, sqlmock.AnyArg(), -1).WillReturnError(errors.Error(fmt.Sprintf("couldn't update the vechicle: %v", 1))),
 			expectError: errors.Error(fmt.Sprintf("couldn't update the vechicle: %v", -1)),
+		},
+		{
+			ID:        -1,
+			Model:     "i8",
+			Name:      "BMW",
+			Launched:  null.BoolFrom(true),
+			UpdatedAt: time.Now().String()[:19],
+			mockQuery: mock.ExpectExec("update vehicles set model=?,name=?,launched=?,updatedAt=? where id=? and deletedAt is NULL").
+				WithArgs("i8", "BMW", true, sqlmock.AnyArg(), -1).WillReturnError(sql.ErrNoRows),
+			expectError: sql.ErrNoRows,
 		},
 		{
 			ID:        1,
@@ -328,6 +358,21 @@ func TestGetAll(t *testing.T) {
 					AddRow("str", "i8", "Black", "MH 03 AT 007", "2021-12-17 13:39:41", "2021-12-17 13:39:41", "BMW", true)).RowsWillBeClosed().
 				WillReturnError(errors.Error("couldn't get list of vechicles:")),
 			expectError: errors.Error("couldn't get list of vechicles:"),
+		},
+		{
+			ID:          1,
+			Model:       "i8",
+			Color:       "Black",
+			NumberPlate: "MH 03 AT 007",
+			Name:        "BMW",
+			Launched:    true,
+			UpdatedAt:   "2021-12-17 13:39:41",
+			CreatedAt:   "2021-12-17 13:39:41",
+			mockQuery: mock.ExpectQuery("select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where deletedAt is NULL").
+				WillReturnRows(sqlmock.NewRows([]string{"id", "model", "color", "numberPlate", "updatedAt", "createdAt", "name", "launched"}).
+					AddRow("str", "i8", "Black", "MH 03 AT 007", "2021-12-17 13:39:41", "2021-12-17 13:39:41", "BMW", true)).RowsWillBeClosed().
+				WillReturnError(sql.ErrNoRows),
+			expectError: sql.ErrNoRows,
 		},
 	}
 	for _, testCase := range tcs {

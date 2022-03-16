@@ -14,22 +14,8 @@ type Vehicle struct {
 }
 
 type DataField struct {
-	Vehicle []*Vehicle `json:"vehicle"`
+	Vehicle []*Vehicle `json:"vehicles"`
 }
 type DataFields struct {
 	Vehicle *Vehicle `json:"vehicle"`
-}
-type VehicleDataField struct {
-	Vehicle []*Vehicle `json:"vehicle"`
-}
-
-type AllVehicleModelResponse struct {
-	Code   int       `json:"code"`
-	Status string    `json:"status"`
-	Data   DataField `json:"data"`
-}
-type VehicleModelResponse struct {
-	Code   int        `json:"code"`
-	Status string     `json:"status"`
-	Data   DataFields `json:"data"`
 }
