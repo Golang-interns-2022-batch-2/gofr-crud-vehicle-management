@@ -34,7 +34,7 @@ func (v StoreHandler) Post(c *gofr.Context, vehicle *model.Vehicle) (*model.Vehi
 		return &model.Vehicle{}, err
 	}
 
-	vehicleData, err = v.datastore.GetDetailsByID(c, int(vehicle.ID))
+	vehicleData, err = v.datastore.GetDetailsByID(c, int(vehicleData.ID))
 	if err != nil {
 		return nil, err
 	}

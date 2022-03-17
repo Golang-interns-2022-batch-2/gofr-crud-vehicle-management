@@ -115,5 +115,6 @@ func (s Handler) GetAll(ctx *gofr.Context) (interface{}, error) {
 			Vehicle: vehicleData,
 		},
 	}
+
 	return res, nil
 }

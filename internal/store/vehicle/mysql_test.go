@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/http"
 	"time"
 
 	"reflect"
@@ -142,8 +143,17 @@ func TestInsertVehicle(t *testing.T) {
 			Name:        "Suzuki",
 			Launched:    null.BoolFrom(false),
 			mockQuery: mock.ExpectExec("insert into vehicles (model,color,numberPlate,name,launched) values(?,?,?,?,?)").
-				WithArgs("i10", "White", "MH 03 AT 123", "Suzuki", false).WillReturnError(errors.Error("couldn't insert the vechicle")),
-			expectError: errors.Error("couldn't insert the vechicle"),
+				WithArgs("i10", "White", "MH 03 AT 123", "Suzuki", false).WillReturnError(
+				&errors.Response{
+					StatusCode: http.StatusInternalServerError,
+					Code:       http.StatusText(http.StatusInternalServerError),
+					Reason:     "couldn't insert the vehicle",
+				}),
+			expectError: &errors.Response{
+				StatusCode: http.StatusInternalServerError,
+				Code:       http.StatusText(http.StatusInternalServerError),
+				Reason:     "couldn't insert the vehicle",
+			},
 		},
 	}
 
@@ -190,14 +200,21 @@ func TestDeleteVehicleByID(t *testing.T) {
 		{
 			ID: 1,
 			mockQuery: mock.ExpectExec("update vehicles set deletedAt=? where id=? and deletedAt is null").WithArgs(sqlmock.AnyArg(), 1).
-				WillReturnError(errors.Error(fmt.Sprintf("couldn't delete the vechicle: %v", 1))),
-			expectError: errors.Error(fmt.Sprintf("couldn't delete the vechicle: %v", 1)),
+				WillReturnError(sql.ErrConnDone),
+			expectError: &errors.Response{
+				StatusCode: http.StatusInternalServerError,
+				Code:       http.StatusText(http.StatusInternalServerError),
+				Reason:     "couldn't delete the vehicle",
+			},
 		},
 		{
 			ID: 1,
 			mockQuery: mock.ExpectExec("update vehicles set deletedAt=? where id=? and deletedAt is null").WithArgs(sqlmock.AnyArg(), 1).
 				WillReturnError(sql.ErrNoRows),
-			expectError: sql.ErrNoRows,
+			expectError: errors.EntityNotFound{
+				Entity: "Vehicle",
+				ID:     "1",
+			},
 		},
 		{
 			ID: 2,
@@ -260,8 +277,17 @@ func TestUpdateVehicleById(t *testing.T) {
 			Launched:  null.BoolFrom(true),
 			UpdatedAt: time.Now().String()[:19],
 			mockQuery: mock.ExpectExec("update vehicles set model=?,name=?,launched=?,updatedAt=? where id=? and deletedAt is NULL").
-				WithArgs("i8", "BMW", true, sqlmock.AnyArg(), -1).WillReturnError(errors.Error(fmt.Sprintf("couldn't update the vechicle: %v", 1))),
-			expectError: errors.Error(fmt.Sprintf("couldn't update the vechicle: %v", -1)),
+				WithArgs("i8", "BMW", true, sqlmock.AnyArg(), -1).WillReturnError(
+				&errors.Response{
+					StatusCode: http.StatusInternalServerError,
+					Code:       http.StatusText(http.StatusInternalServerError),
+					Reason:     "couldn't update the vehicle",
+				}),
+			expectError: &errors.Response{
+				StatusCode: http.StatusInternalServerError,
+				Code:       http.StatusText(http.StatusInternalServerError),
+				Reason:     "couldn't update the vehicle",
+			},
 		},
 		{
 			ID:        -1,
@@ -271,7 +297,10 @@ func TestUpdateVehicleById(t *testing.T) {
 			UpdatedAt: time.Now().String()[:19],
 			mockQuery: mock.ExpectExec("update vehicles set model=?,name=?,launched=?,updatedAt=? where id=? and deletedAt is NULL").
 				WithArgs("i8", "BMW", true, sqlmock.AnyArg(), -1).WillReturnError(sql.ErrNoRows),
-			expectError: sql.ErrNoRows,
+			expectError: errors.EntityNotFound{
+				Entity: "Vehicle",
+				ID:     "-1",
+			},
 		},
 		{
 			ID:        1,
@@ -356,8 +385,17 @@ func TestGetAll(t *testing.T) {
 			mockQuery: mock.ExpectQuery("select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where deletedAt is NULL").
 				WillReturnRows(sqlmock.NewRows([]string{"id", "model", "color", "numberPlate", "updatedAt", "createdAt", "name", "launched"}).
 					AddRow("str", "i8", "Black", "MH 03 AT 007", "2021-12-17 13:39:41", "2021-12-17 13:39:41", "BMW", true)).RowsWillBeClosed().
-				WillReturnError(errors.Error("couldn't get list of vechicles:")),
-			expectError: errors.Error("couldn't get list of vechicles:"),
+				WillReturnError(
+					&errors.Response{
+						StatusCode: http.StatusInternalServerError,
+						Code:       http.StatusText(http.StatusInternalServerError),
+						Reason:     "couldn't get list of vehicle",
+					}),
+			expectError: &errors.Response{
+				StatusCode: http.StatusInternalServerError,
+				Code:       http.StatusText(http.StatusInternalServerError),
+				Reason:     "couldn't get list of vehicle",
+			},
 		},
 		{
 			ID:          1,
@@ -372,7 +410,10 @@ func TestGetAll(t *testing.T) {
 				WillReturnRows(sqlmock.NewRows([]string{"id", "model", "color", "numberPlate", "updatedAt", "createdAt", "name", "launched"}).
 					AddRow("str", "i8", "Black", "MH 03 AT 007", "2021-12-17 13:39:41", "2021-12-17 13:39:41", "BMW", true)).RowsWillBeClosed().
 				WillReturnError(sql.ErrNoRows),
-			expectError: sql.ErrNoRows,
+			expectError: errors.EntityNotFound{
+				Entity: "Vehicle",
+				ID:     "all",
+			},
 		},
 	}
 	for _, testCase := range tcs {

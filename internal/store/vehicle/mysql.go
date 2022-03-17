@@ -27,7 +27,6 @@ func (s Storer) GetDetailsByID(ctx *gofr.Context, id int) (*model.Vehicle, error
 			&vehResponse.UpdatedAt, &vehResponse.CreatedAt, &vehResponse.Name, &vehResponse.Launched)
 
 	if err == sql.ErrNoRows {
-
 		idStr := strconv.Itoa(id)
 
 		return nil, errors.EntityNotFound{
@@ -37,7 +36,6 @@ func (s Storer) GetDetailsByID(ctx *gofr.Context, id int) (*model.Vehicle, error
 	}
 
 	if err != nil {
-
 		return nil, &errors.Response{
 			StatusCode: http.StatusInternalServerError,
 			Code:       http.StatusText(http.StatusInternalServerError),
@@ -55,7 +53,7 @@ func (s Storer) InsertVehicle(ctx *gofr.Context, vehicle *model.Vehicle) (*model
 		return nil, &errors.Response{
 			StatusCode: http.StatusInternalServerError,
 			Code:       http.StatusText(http.StatusInternalServerError),
-			Reason:     "couldn't delete the vehicle",
+			Reason:     "couldn't insert the vehicle",
 		}
 	}
 
@@ -71,7 +69,6 @@ func (s Storer) DeleteVehicleByID(ctx *gofr.Context, id int) error {
 	res, err := ctx.DB().ExecContext(ctx, "update vehicles set deletedAt=? where id=? and deletedAt is null", curentDateTime, id)
 
 	if err == sql.ErrNoRows {
-
 		idStr := strconv.Itoa(id)
 
 		return errors.EntityNotFound{
@@ -79,8 +76,8 @@ func (s Storer) DeleteVehicleByID(ctx *gofr.Context, id int) error {
 			ID:     idStr,
 		}
 	}
-	if err != nil {
 
+	if err != nil {
 		return &errors.Response{
 			StatusCode: http.StatusInternalServerError,
 			Code:       http.StatusText(http.StatusInternalServerError),
@@ -111,7 +108,6 @@ func (s Storer) UpdateVehicleByID(ctx *gofr.Context, vehicle *model.Vehicle) err
 	_, err := ctx.DB().ExecContext(ctx, query, values...)
 
 	if err == sql.ErrNoRows {
-
 		idStr := strconv.Itoa(int(vehicle.ID))
 
 		return errors.EntityNotFound{
@@ -121,7 +117,6 @@ func (s Storer) UpdateVehicleByID(ctx *gofr.Context, vehicle *model.Vehicle) err
 	}
 
 	if err != nil {
-
 		return &errors.Response{
 			StatusCode: http.StatusInternalServerError,
 			Code:       http.StatusText(http.StatusInternalServerError),
@@ -137,18 +132,17 @@ func (s Storer) GetAll(ctx *gofr.Context) ([]*model.Vehicle, error) {
 		QueryContext(ctx, "select id,model,color,numberPlate,updatedAt,createdAt,name,launched from vehicles where deletedAt is NULL")
 
 	if err == sql.ErrNoRows {
-
 		return nil, errors.EntityNotFound{
 			Entity: "Vehicle",
 			ID:     "all",
 		}
 	}
-	if err != nil {
 
+	if err != nil {
 		return nil, &errors.Response{
 			StatusCode: http.StatusInternalServerError,
 			Code:       http.StatusText(http.StatusInternalServerError),
-			Reason:     "couldn't delete the vehicle",
+			Reason:     "couldn't get list of vehicle",
 		}
 	}
 
@@ -157,10 +151,10 @@ func (s Storer) GetAll(ctx *gofr.Context) ([]*model.Vehicle, error) {
 	for res.Next() {
 		var vehicle model.Vehicle
 
-		err := res.Scan(&vehicle.ID, &vehicle.Model, &vehicle.Color, &vehicle.NumberPlate, &vehicle.UpdatedAt, &vehicle.CreatedAt, &vehicle.Name, &vehicle.Launched)
+		err := res.Scan(&vehicle.ID, &vehicle.Model, &vehicle.Color, &vehicle.NumberPlate,
+			&vehicle.UpdatedAt, &vehicle.CreatedAt, &vehicle.Name, &vehicle.Launched)
 
 		if err != nil {
-
 			return nil, &errors.Response{
 				StatusCode: http.StatusInternalServerError,
 				Code:       http.StatusText(http.StatusInternalServerError),

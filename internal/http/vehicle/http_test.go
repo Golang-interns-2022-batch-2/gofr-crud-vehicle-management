@@ -166,7 +166,7 @@ func TestCreate(t *testing.T) {
 				"launched": 	false
 		    }`),
 			statusCode:    400,
-			expectedError: errors.InvalidParam{Param: []string{"body"}},
+			expectedError: errors.InvalidParam{},
 		},
 	}
 
